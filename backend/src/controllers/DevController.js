@@ -1,6 +1,7 @@
 import axios from 'axios';
 import Dev from '../models/Dev';
 import parseStringAsArray from '../utils/parseStringAsArray';
+import { findConnections, sendMessage } from '../websocket';
 
 class DevController {
   async index(req, res) {
@@ -9,7 +10,7 @@ class DevController {
     return res.json(devs);
   }
 
-  async store  (req, res) {
+  async store(req, res) {
     const { github_username, techs, latitude, longitude } = req.body;
 
     let dev = await Dev.findOne({ github_username });
@@ -37,6 +38,13 @@ class DevController {
       techs: techsArray,
       location
     });
+
+    const sendSocketMessageTo = findConnections(
+      { latitude, longitude }, 
+      techsArray
+    );
+
+    sendMessage(sendSocketMessageTo, 'new-dev', dev);
 
     return res.json(dev);
   }
